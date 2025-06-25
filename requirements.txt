@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+pandas
+faiss-cpu
+sentence-transformers
+python-multipart
+gtts 

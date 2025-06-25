@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank FAQ Assistant</title>
+    <style>
+        body {
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(80, 80, 160, 0.15);
+            padding: 2.5rem 2rem 2rem 2rem;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            margin-bottom: 1.5rem;
+            font-size: 1.6rem;
+            color: #2575fc;
+        }
+        input[type="text"] {
+            width: 90%;
+            padding: 0.7rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 1.2rem;
+            outline: none;
+            transition: border 0.2s;
+        }
+        input[type="text"]:focus {
+            border: 1.5px solid #2575fc;
+        }
+        button {
+            background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.7rem 2.2rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background: linear-gradient(90deg, #2575fc 0%, #6a11cb 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 117, 252, 0.3);
+        }
+        .answer {
+            margin-top: 2rem;
+            background: #f8f9ff;
+            border-radius: 12px;
+            padding: 1.5rem;
+            color: #222;
+            font-size: 1.08rem;
+            min-height: 40px;
+            text-align: left;
+            border: 1px solid #e8ecff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        .question-label {
+            color: #444;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .speak-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            font-size: 1.3rem;
+            cursor: pointer;
+            margin-left: 15px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .speak-btn:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        .speak-btn:active {
+            transform: translateY(0) scale(0.95);
+        }
+        .speak-btn:disabled {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
+        }
+        .speak-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s;
+        }
+        .speak-btn:active::before {
+            width: 100%;
+            height: 100%;
+        }
+        .answer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e8ecff;
+        }
+        .answer-title {
+            font-weight: 600;
+            color: #2575fc;
+            font-size: 1.1rem;
+        }
+        .answer-text {
+            margin-top: 10px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .loading-animation {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .speak-btn.playing {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            animation: pulse 1s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bank FAQ Assistant</h1>
+        <label class="question-label" for="user-question">Ask your question:</label>
+        <input type="text" id="user-question" placeholder="Type your question here..." />
+        <br>
+        <button onclick="askQuestion()">Get Answer</button>
+        <div class="answer" id="answer"></div>
+    </div>
+    <script>
+        async function askQuestion() {
+            const question = document.getElementById('user-question').value.trim();
+            const answerDiv = document.getElementById('answer');
+            if (!question) {
+                answerDiv.textContent = 'Please enter a question.';
+                return;
+            }
+            answerDiv.textContent = 'Searching...';
+            answerDiv.classList.add('loading-animation');
+            console.log('Sending request for:', question);
+            try {
+                const res = await fetch('http://localhost:8000/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: question, k: 1 })
+                });
+                console.log('Response status:', res.status);
+                const data = await res.json();
+                console.log('Response data:', data);
+                answerDiv.classList.remove('loading-animation');
+                if (data.results && data.results.length > 0) {
+                    const result = data.results[0];
+                    answerDiv.innerHTML = `
+                        <div class="answer-header">
+                            <div class="answer-title">Answer</div>
+                            <button class="speak-btn" onclick="speakText('${result.full_answer.replace(/'/g, "\\'")}')" title="Listen to answer">
+                                🔊
+                            </button>
+                        </div>
+                        <div class="answer-text">${result.full_answer}</div>
+                    `;
+                } else {
+                    answerDiv.textContent = 'No answer found.';
+                }
+            } catch (e) {
+                console.error('Error:', e);
+                answerDiv.classList.remove('loading-animation');
+                answerDiv.textContent = 'Error connecting to server: ' + e.message;
+            }
+        }
+
+        async function speakText(text) {
+            const speakBtn = event.target;
+            speakBtn.disabled = true;
+            speakBtn.classList.add('playing');
+            speakBtn.innerHTML = '⏳';
+            
+            try {
+                const response = await fetch('http://localhost:8000/tts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const audioUrl = URL.createObjectURL(blob);
+                    const audio = new Audio(audioUrl);
+                    
+                    audio.onended = () => {
+                        speakBtn.disabled = false;
+                        speakBtn.classList.remove('playing');
+                        speakBtn.innerHTML = '🔊';
+                        URL.revokeObjectURL(audioUrl);
+                    };
+                    
+                    audio.onerror = () => {
+                        speakBtn.disabled = false;
+                        speakBtn.classList.remove('playing');
+                        speakBtn.innerHTML = '🔊';
+                        URL.revokeObjectURL(audioUrl);
+                    };
+                    
+                    audio.play();
+                } else {
+                    throw new Error('TTS request failed');
+                }
+            } catch (error) {
+                console.error('TTS Error:', error);
+                speakBtn.disabled = false;
+                speakBtn.classList.remove('playing');
+                speakBtn.innerHTML = '🔊';
+                alert('Failed to play audio. Please try again.');
+            }
+        }
+
+        document.getElementById('user-question').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') askQuestion();
+        });
+    </script>
+</body>
+</html> 
