@@ -164,6 +164,11 @@
         <div class="answer" id="answer"></div>
     </div>
     <script>
+        // Configuration - Change this to your Render URL when deployed
+        const API_BASE_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:8000' 
+            : window.location.origin; // Uses the same domain when deployed
+
         async function askQuestion() {
             const question = document.getElementById('user-question').value.trim();
             const answerDiv = document.getElementById('answer');
@@ -175,7 +180,7 @@
             answerDiv.classList.add('loading-animation');
             console.log('Sending request for:', question);
             try {
-                const res = await fetch('http://localhost:8000/search', {
+                const res = await fetch(`${API_BASE_URL}/search`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ query: question, k: 1 })
@@ -212,7 +217,7 @@
             speakBtn.innerHTML = '⏳';
             
             try {
-                const response = await fetch('http://localhost:8000/tts', {
+                const response = await fetch(`${API_BASE_URL}/tts`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ text: text })

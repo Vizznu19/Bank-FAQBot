@@ -2,6 +2,7 @@ import pandas as pd
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
 import faiss
@@ -22,6 +23,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount static files for deployment
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Load data
 faq_df = pd.read_csv("BankFAQs.csv", usecols=["Question", "Answer"])
@@ -58,6 +62,10 @@ class QueryRequest(BaseModel):
 class TTSRequest(BaseModel):
     text: str
 
+@app.get("/")
+def read_root():
+    return FileResponse("static/index.html")
+
 @app.post("/search")
 async def search_faq(req: QueryRequest):
     query_embedding = model.encode([req.query]).astype("float32")
@@ -86,6 +94,6 @@ async def text_to_speech(req: TTSRequest):
         # Return the audio file
         return FileResponse(tmp_file.name, media_type="audio/mpeg", filename="speech.mp3")
 
-@app.get("/")
-def root():
-    return {"message": "FAQ Assistant is running with chunking and TTS."} 
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "message": "FAQ Assistant is ready"} 
